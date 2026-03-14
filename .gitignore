@@ -1,0 +1,8 @@
+# PyCharm dosyaları
+.idea/
+__pycache__/
+
+# Üretilen veri dosyaları
+episode_steps.txt
+graph_data.txt
+training_table.txt
