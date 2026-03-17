@@ -1,3 +1,5 @@
+from statistics import variance
+
 import numpy as np
 import random
 
@@ -13,7 +15,7 @@ class QLearningAgent:
         self.epsilon_decay = (self.min_epsilon / self.epsilon) ** (1 / self.episodes) if self.episodes > 0 else 0.99
 
         self.alpha = 0.1
-        self.gamma = 0.9
+        self.gamma = 0.95
         self.q_table = np.zeros((200, 4))
 
     def get_state_index(self, state):
@@ -24,29 +26,29 @@ class QLearningAgent:
         window_size = 10
         recent_steps = []
 
-        consecutive_plateau = 0
-        delta_threshold = 0.5
-        previous_moving_average = None
+        consecutive_value = 0
+        avg_threshold = 0.5
+        var_threshold = 1
 
         # open both files in write mode
         with open(table_file, "w", encoding="utf-8") as t_file, open(graph_file, "w", encoding="utf-8") as g_file:
 
             # Table Header
-            header = f"| {'Episode':^17} | {'Steps':^15} | {'Moving Avg':^27} |"
+            header = f"| {'Episode':^17} | {'Steps':^15} | {'Variance':^27} |"
             separator = "-" * len(header)
             t_file.write(separator + "\n")
             t_file.write(header + "\n")
             t_file.write(separator + "\n")
 
             # CSV Format Header
-            g_file.write("Episode,Steps,Moving_Average\n")
+            g_file.write("Episode,Steps,Variance\n")
 
             for episode in range(self.episodes):
                 state = self.env.reset()
                 state_idx = self.get_state_index(state)
                 done = False
                 step_count = 0
-
+                previous_avg = 0
                 while not done:
                     # Exploration vs Exploitation
                     if random.uniform(0, 1) < self.epsilon:
@@ -70,6 +72,9 @@ class QLearningAgent:
                 if self.epsilon > self.min_epsilon:
                     self.epsilon *= self.epsilon_decay
 
+                if len(recent_steps) > 0:
+                    previous_avg = np.mean(recent_steps)
+
                 recent_steps.append(step_count)
 
                 if len(recent_steps) > window_size:
@@ -77,24 +82,24 @@ class QLearningAgent:
 
                 # Sliding window
                 if len(recent_steps) == window_size:
-                    moving_average = sum(recent_steps) / len(recent_steps)
+                    moving_average = np.mean(recent_steps)
+                    step_variance = variance(recent_steps)
+
 
                     # String formatting
-                    t_file.write(f"| {episode + 1:^17} | {step_count:^15} | {moving_average:^27.2f} |\n")
+                    t_file.write(f"| {episode + 1:^17} | {step_count:^15} | {step_variance:^27.2f} |\n")
 
                     # Comma-separated format
-                    g_file.write(f"{episode + 1},{step_count},{moving_average:.2f}\n")
+                    g_file.write(f"{episode + 1},{step_count},{step_variance:.2f}\n")
 
                     # Dynamic Convergence
-                    if previous_moving_average is not None:
-                        if abs(moving_average - previous_moving_average) <= delta_threshold:
-                            consecutive_plateau += 1
-                        else:
-                            consecutive_plateau = 0
 
-                    previous_moving_average = moving_average
+                    if step_variance <= var_threshold and (abs(previous_avg - moving_average) <= avg_threshold):
+                        consecutive_value += 1
+                    else:
+                        consecutive_value = 0
 
-                    if consecutive_plateau >= 30:
+                    if consecutive_value >= 30:
                         t_file.write(separator + "\n")
                         print(f"\n--- CONVERGENCE ---")
                         print(f"Agent reached optimum performance at level {episode + 1}.")
@@ -104,7 +109,7 @@ class QLearningAgent:
                     # For sections where the average has not yet been calculated, we leave that section blank (Missing data)
                     g_file.write(f"{episode + 1},{step_count},\n")
 
-            if len(recent_steps) == window_size and consecutive_plateau < 30:
+            if len(recent_steps) == window_size and consecutive_value < 30:
                 t_file.write(separator + "\n")
 
     def test_and_save_solution(self, filename="steps.txt"):

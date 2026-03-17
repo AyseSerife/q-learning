@@ -1,5 +1,3 @@
-import numpy as np
-
 class DeliveryEnvironment:
     def __init__(self):
         self.grid_size = 10
@@ -17,7 +15,6 @@ class DeliveryEnvironment:
 
     def _get_state(self):
         return (self.truck_pos[0], self.truck_pos[1], int(self.has_load))
-
     def step(self, action):
         x, y = self.truck_pos
         reward = -1
