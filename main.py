@@ -18,7 +18,7 @@ def main():
 
     agent.train()
 
-    agent.test_and_save_solution(filename="episode_steps.txt")
+    agent.test_and_save_solution(filename="solution_path.txt")
 
 
 if __name__ == "__main__":

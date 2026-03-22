@@ -16,7 +16,7 @@ class QLearningAgent:
 
         self.alpha = 0.1
         self.gamma = 0.95
-        self.q_table = np.zeros((200, 4))
+        self.q_table = np.zeros((200, 4)) # 10 * 10 = 100 (grid size) 100 * 2 = 200 load-unload
 
     def get_state_index(self, state):
         x, y, has_load = state
@@ -67,7 +67,8 @@ class QLearningAgent:
 
                     state_idx = next_state_idx
                     step_count += 1
-
+                    if step_count > 1000:
+                        break
 
                 if self.epsilon > self.min_epsilon:
                     self.epsilon *= self.epsilon_decay
