@@ -12,7 +12,8 @@ class QLearningAgent:
         self.min_epsilon = epsilon_end
 
         # Epsilon decay rate
-        self.epsilon_decay = (self.min_epsilon / self.epsilon) ** (1 / self.episodes) if self.episodes > 0 else 0.99
+        decay_episodes = self.episodes * 0.5
+        self.epsilon_decay = (self.min_epsilon / self.epsilon) ** (1 / decay_episodes) if decay_episodes > 0 else 0.99
 
         self.alpha = 0.1
         self.gamma = 0.95
@@ -27,22 +28,21 @@ class QLearningAgent:
         recent_steps = []
 
         consecutive_value = 0
-        avg_threshold = 0.5
-        var_threshold = 1
+        avg_threshold = 4
+        var_threshold = 8
 
         # open both files in write mode
         with open(table_file, "w", encoding="utf-8") as t_file, open(graph_file, "w", encoding="utf-8") as g_file:
 
             # Table Header
-            header = f"| {'Episode':^17} | {'Steps':^15} | {'Variance':^27} |"
+            header = f"| {'Episode':^15} | {'Steps':^12} | {'Variance':^15} | {'Moving Average':^18} |"
             separator = "-" * len(header)
             t_file.write(separator + "\n")
             t_file.write(header + "\n")
             t_file.write(separator + "\n")
 
             # CSV Format Header
-            g_file.write("Episode,Steps,Variance\n")
-
+            g_file.write("Episode,Steps,Variance,MovingAverage\n")
             for episode in range(self.episodes):
                 state = self.env.reset()
                 state_idx = self.get_state_index(state)
@@ -56,7 +56,7 @@ class QLearningAgent:
                     else:
                         action = np.argmax(self.q_table[state_idx])
 
-                    next_state, reward, done = self.env.step(action)
+                    next_state, reward, done, actual_action = self.env.step(action)
                     next_state_idx = self.get_state_index(next_state)
 
                     old_value = self.q_table[state_idx, action]
@@ -67,7 +67,7 @@ class QLearningAgent:
 
                     state_idx = next_state_idx
                     step_count += 1
-                    if step_count > 1000:
+                    if step_count > 2500:
                         break
 
                 if self.epsilon > self.min_epsilon:
@@ -86,29 +86,26 @@ class QLearningAgent:
                     moving_average = np.mean(recent_steps)
                     step_variance = variance(recent_steps)
 
-
                     # String formatting
-                    t_file.write(f"| {episode + 1:^17} | {step_count:^15} | {step_variance:^27.2f} |\n")
-
+                    t_file.write(f"| {episode + 1:^15} | {step_count:^12} | {step_variance:^15.2f} | {moving_average:^18.2f} |\n")
                     # Comma-separated format
-                    g_file.write(f"{episode + 1},{step_count},{step_variance:.2f}\n")
+                    g_file.write(f"{episode + 1},{step_count},{step_variance:.2f},{moving_average:.2f}\n")
 
                     # Dynamic Convergence
-
                     if step_variance <= var_threshold and (abs(previous_avg - moving_average) <= avg_threshold):
                         consecutive_value += 1
                     else:
                         consecutive_value = 0
 
-                    if consecutive_value >= 30:
+                    if consecutive_value >= 10:
                         t_file.write(separator + "\n")
                         print(f"\n--- CONVERGENCE ---")
                         print(f"Agent reached optimum performance at level {episode + 1}.")
                         break
                 else:
-                    t_file.write(f"| {episode + 1:^17} | {step_count:^15} | {'...':^27} |\n")
+                    t_file.write(f"| {episode + 1:^15} | {step_count:^12} | {'...':^15} | {'...':^18} |\n")
                     # For sections where the average has not yet been calculated, we leave that section blank (Missing data)
-                    g_file.write(f"{episode + 1},{step_count},\n")
+                    g_file.write(f"{episode + 1},{step_count},,\n")
 
             if len(recent_steps) == window_size and consecutive_value < 30:
                 t_file.write(separator + "\n")
@@ -129,7 +126,7 @@ class QLearningAgent:
                 file.write(
                     f"Step: {total_test_steps + 1}: Truck {state[:2]} Action: {action_names[action]}\n")
 
-                state, reward, done = self.env.step(action)
+                state, reward, done, actual_action= self.env.step(action)
                 total_test_steps += 1
 
                 if total_test_steps > 50:

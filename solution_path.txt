@@ -1,0 +1,22 @@
+=== Solution Path ===
+
+Step: 1: Truck (0, 0) Action: Right
+Step: 2: Truck (0, 0) Action: Right
+Step: 3: Truck (0, 1) Action: Right
+Step: 4: Truck (0, 2) Action: Down
+Step: 5: Truck (1, 2) Action: Down
+Step: 6: Truck (2, 2) Action: Right
+Step: 7: Truck (2, 3) Action: Right
+Step: 8: Truck (2, 4) Action: Down
+Step: 9: Truck (3, 4) Action: Right
+Step: 10: Truck (3, 5) Action: Right
+Step: 11: Truck (3, 6) Action: Down
+Step: 12: Truck (4, 6) Action: Right
+Step: 13: Truck (4, 7) Action: Down
+Step: 14: Truck (5, 7) Action: Right
+Step: 15: Truck (5, 8) Action: Down
+Step: 16: Truck (6, 8) Action: Right
+Step: 17: Truck (6, 9) Action: Down
+Step: 18: Truck (7, 9) Action: Down
+
+SUCCESS: Total number of steps: 18
